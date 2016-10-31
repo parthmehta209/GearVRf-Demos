@@ -1,9 +1,13 @@
 package org.gearvrf.io.sceneeditor;
 
+import org.gearvrf.GVRAndroidResource;
+import org.gearvrf.GVRAndroidResource.TextureCallback;
 import org.gearvrf.GVRBehavior;
+import org.gearvrf.GVRMesh;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRSceneObject.BoundingVolume;
+import org.gearvrf.GVRTexture;
 import org.gearvrf.animation.GVRAnimation;
 import org.gearvrf.animation.GVRAnimationEngine;
 import org.gearvrf.animation.GVRRepeatMode;
@@ -14,6 +18,7 @@ import org.gearvrf.io.sceneeditor.EditObjectView.EditViewChangeListener;
 import org.gearvrf.utility.Log;
 
 import java.io.IOException;
+import java.util.concurrent.Future;
 
 public class EditableBehavior extends GVRBehavior implements EditViewChangeListener {
     public static final String TAG = EditableBehavior.class.getSimpleName();
@@ -29,6 +34,7 @@ public class EditableBehavior extends GVRBehavior implements EditViewChangeListe
     private GVRAnimationEngine animationEngine;
     private GVRAnimation rotationAnimation;
     private Cursor cursor;
+    private GVRSceneObject boundingBox;
 
     public interface DetachListener {
         void onDetach();
@@ -72,6 +78,28 @@ public class EditableBehavior extends GVRBehavior implements EditViewChangeListe
             rotationAnimation.start(animationEngine);
             adjustArrowPosition(newOwner);
         }
+        final GVRMesh mesh = newOwner.getBoundingBox();
+        getGVRContext().loadTexture(new TextureCallback() {
+            @Override
+            public boolean stillWanted(GVRAndroidResource androidResource) {
+                return false;
+            }
+
+            @Override
+            public void loaded(GVRTexture resource, GVRAndroidResource androidResource) {
+                boundingBox = new GVRSceneObject(getGVRContext(), mesh, resource);
+                //boundingBox.getTransform().setPosition(0,0,0);
+                owner.addChildObject(boundingBox);
+            }
+
+            @Override
+            public void failed(Throwable t, GVRAndroidResource androidResource) {
+
+            }
+        }, new GVRAndroidResource(getGVRContext().getContext(), R
+                .drawable
+                .red));
+
     }
 
     private void adjustArrowPosition(GVRSceneObject ownerObject) {
